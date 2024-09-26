@@ -5,6 +5,8 @@
 
 use core::fmt;
 
+pub mod registers;
+
 /// A protection ring level.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PrivilegeLevel {
