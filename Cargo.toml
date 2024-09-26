@@ -1,5 +1,5 @@
 [package]
-name = "x88"
+name = "x86"
 version = "0.1.0"
 authors = [ "Jarl Evanson <evanson.jarl@gmail.com>" ]
 edition = "2021"
