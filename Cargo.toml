@@ -5,6 +5,14 @@ authors = [ "Jarl Evanson <evanson.jarl@gmail.com>" ]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 
+[features]
+# Enables support for `x86` specific items
+x86 = []
+# Enables support for `x86_64` specific items
+x86_64 = []
+# Enables `x86` and `x86_64` specific instructions.
+instructions = []
+
 [dependencies]
 
 [lints.rust]
