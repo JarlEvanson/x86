@@ -40,6 +40,19 @@ impl CS {
     pub unsafe fn set(selector: SegmentSelector) {
         // SAFETY:
         // The assembly code does well-formed operations and follows its declared options.
+        #[cfg(target_arch = "x86")]
+        unsafe {
+            asm!(
+                "push {selector:x}",
+                "push 5f",
+                "retf",
+                "5:",
+                selector = in(reg) selector.0
+            )
+        }
+        // SAFETY:
+        // The assembly code does well-formed operations and follows its declared options.
+        #[cfg(target_arch = "x86_64")]
         unsafe {
             asm!(
                 "push {selector}",
@@ -334,7 +347,7 @@ impl fmt::Debug for SegmentSelector {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::{registers::segmentation::SegmentSelector, PrivilegeLevel};
 
     #[test]
