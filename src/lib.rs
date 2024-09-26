@@ -51,3 +51,50 @@ impl fmt::Display for PrivilegeLevel {
         fmt::Debug::fmt(self, f)
     }
 }
+
+/// The `x86` architecture.
+///
+/// This is a 32-bit architecture.
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct X86;
+
+/// The `x86_64` architecture.
+///
+/// This is a 64-bit architecture.
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct X86_64;
+
+/// The supported architectures.
+///
+/// This trait is sealed.
+pub trait Architecture: private::Sealed {
+    /// The type of a general purpose register.
+    type GeneralRegister: Copy
+        + core::ops::BitAnd<Output = Self::GeneralRegister>
+        + core::ops::BitOr<Output = Self::GeneralRegister>
+        + core::ops::BitXor<Output = Self::GeneralRegister>
+        + PartialEq
+        + Eq
+        + PartialOrd
+        + Ord;
+}
+
+impl Architecture for X86 {
+    type GeneralRegister = u32;
+}
+impl Architecture for X86_64 {
+    type GeneralRegister = u64;
+}
+
+mod private {
+    //! Module used to seal the [`Architecture`] trait.
+
+    use crate::{X86, X86_64};
+
+    /// Trait used to seal [`Architecture`].
+    pub trait Sealed {}
+
+    // Implement for the two architectures supported.
+    impl Sealed for X86 {}
+    impl Sealed for X86_64 {}
+}
