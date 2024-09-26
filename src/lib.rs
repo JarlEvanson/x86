@@ -5,6 +5,9 @@
 
 use core::fmt;
 
+#[cfg(feature = "instructions")]
+pub mod instructions;
+
 pub mod registers;
 
 /// A protection ring level.
