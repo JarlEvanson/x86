@@ -7,8 +7,8 @@ use core::fmt;
 
 #[cfg(feature = "instructions")]
 pub mod instructions;
-
 pub mod registers;
+pub mod structures;
 
 /// A protection ring level.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
