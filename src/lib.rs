@@ -76,6 +76,7 @@ pub trait Architecture: private::Sealed {
         + core::ops::BitAnd<Output = Self::GeneralRegister>
         + core::ops::BitOr<Output = Self::GeneralRegister>
         + core::ops::BitXor<Output = Self::GeneralRegister>
+        + core::hash::Hash
         + PartialEq
         + Eq
         + PartialOrd

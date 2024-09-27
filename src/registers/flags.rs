@@ -5,7 +5,6 @@ use core::fmt;
 use crate::{Architecture, PrivilegeLevel, X86, X86_64};
 
 /// The `x86` and `x86_64` flags register.
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Flags<A: Architecture>(A::GeneralRegister);
 
 #[allow(clippy::missing_docs_in_private_items)]
@@ -183,7 +182,7 @@ impl Flags<X86_64> {
     }
 }
 
-impl<T: ArchitectureExt> core::ops::BitAnd for Flags<T> {
+impl<T: Architecture> core::ops::BitAnd for Flags<T> {
     type Output = Self;
 
     fn bitand(self, rhs: Self) -> Self::Output {
@@ -191,13 +190,13 @@ impl<T: ArchitectureExt> core::ops::BitAnd for Flags<T> {
     }
 }
 
-impl<T: ArchitectureExt> core::ops::BitAndAssign for Flags<T> {
+impl<T: Architecture> core::ops::BitAndAssign for Flags<T> {
     fn bitand_assign(&mut self, rhs: Self) {
         *self = Self(self.0 & rhs.0);
     }
 }
 
-impl<T: ArchitectureExt> core::ops::BitOr for Flags<T> {
+impl<T: Architecture> core::ops::BitOr for Flags<T> {
     type Output = Self;
 
     fn bitor(self, rhs: Self) -> Self::Output {
@@ -205,13 +204,13 @@ impl<T: ArchitectureExt> core::ops::BitOr for Flags<T> {
     }
 }
 
-impl<T: ArchitectureExt> core::ops::BitOrAssign for Flags<T> {
+impl<T: Architecture> core::ops::BitOrAssign for Flags<T> {
     fn bitor_assign(&mut self, rhs: Self) {
         *self = Self(self.0 | rhs.0);
     }
 }
 
-impl<T: ArchitectureExt> core::ops::BitXor for Flags<T> {
+impl<T: Architecture> core::ops::BitXor for Flags<T> {
     type Output = Self;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
@@ -219,19 +218,41 @@ impl<T: ArchitectureExt> core::ops::BitXor for Flags<T> {
     }
 }
 
-impl<T: ArchitectureExt> core::ops::BitXorAssign for Flags<T> {
+impl<T: Architecture> core::ops::BitXorAssign for Flags<T> {
     fn bitxor_assign(&mut self, rhs: Self) {
         *self = Self(self.0 ^ rhs.0);
     }
 }
 
-impl<A: ArchitectureExt + PartialEq + Copy> fmt::Debug for Flags<A> {
+impl<A: Architecture> PartialEq for Flags<A> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+
+impl<A: Architecture> Eq for Flags<A> {}
+
+impl<A: Architecture> Clone for Flags<A> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<A: Architecture> Copy for Flags<A> {}
+
+impl<A: Architecture> core::hash::Hash for Flags<A> {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+
+impl<A: ArchitectureExt> fmt::Debug for Flags<A> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         FlagsDisplay::<A>(self.0).fmt(f)
     }
 }
 
-impl<A: ArchitectureExt + PartialEq + Copy> fmt::Display for Flags<A> {
+impl<A: ArchitectureExt> fmt::Display for Flags<A> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(self, f)
     }
@@ -241,7 +262,7 @@ impl<A: ArchitectureExt + PartialEq + Copy> fmt::Display for Flags<A> {
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
 pub struct FlagsDisplay<A: Architecture>(pub A::GeneralRegister);
 
-impl<A: ArchitectureExt + PartialEq + Copy> fmt::Debug for FlagsDisplay<A> {
+impl<A: ArchitectureExt> fmt::Debug for FlagsDisplay<A> {
     #[allow(unused_assignments)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = Flags::<A>(self.0);
