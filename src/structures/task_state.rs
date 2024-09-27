@@ -1,5 +1,8 @@
 //! Definitions and interfaces to interact with `x86` and `x86_64` task state segments.
 
+#[expect(unused_imports)]
+use crate::PrivilegeLevel;
+
 /// A 64-bit task state segment.
 ///
 /// This contains stacks to which to switch when entering a [`PrivilegeLevel`], stacks to which to
