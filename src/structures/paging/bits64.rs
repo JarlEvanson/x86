@@ -4,6 +4,61 @@
 
 use core::marker::PhantomData;
 
+/// Representation of a page table.
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub struct PageTable<L: PageMapLevel>([PageMapEntry<L, Unclassified>; 512]);
+
+impl<L: PageMapLevel> PageTable<L> {
+    /// Creates an empty [`PageTable`].
+    pub const fn new() -> Self {
+        Self(
+            [const {
+                PageMapEntry {
+                    value: 0,
+                    phantom: PhantomData,
+                }
+            }; 512],
+        )
+    }
+
+    /// Gets the [`PageMapEntry`] located at `index`.
+    ///
+    /// Returns [`None`] if `index` is out of bounds.
+    pub const fn get(&self, index: usize) -> Option<PageMapEntry<L, Unclassified>> {
+        #[allow(clippy::nonminimal_bool)]
+        if !(index < self.0.len()) {
+            return None;
+        }
+
+        Some(self.0[index])
+    }
+
+    /// Sets the [`PageMapEntry`] located at `index` to `entry`.
+    ///
+    /// # Errors
+    /// Return [`Err`] if `index` is out of bounds.
+    pub const fn set(
+        &mut self,
+        index: usize,
+        entry: PageMapEntry<L, Unclassified>,
+    ) -> Result<(), PageMapEntry<L, Unclassified>> {
+        #[allow(clippy::nonminimal_bool)]
+        if !(index < self.0.len()) {
+            return Err(entry);
+        }
+
+        self.0[index] = entry;
+        Ok(())
+    }
+}
+
+impl<L: PageMapLevel> Default for PageTable<L> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A 64-bit page table entry.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct PageMapEntry<L: PageMapLevel, S: PageMapEntryState> {
@@ -14,6 +69,14 @@ pub struct PageMapEntry<L: PageMapLevel, S: PageMapEntryState> {
 }
 
 impl<L: PageMapLevel, S: PageMapEntryState> PageMapEntry<L, S> {
+    /// Returns this [`PageMapEntry`] as a [`PageMapEntry<L, Unclassified>`].
+    pub const fn unclassified(self) -> PageMapEntry<L, Unclassified> {
+        PageMapEntry {
+            value: self.value,
+            phantom: PhantomData,
+        }
+    }
+
     /// Returns [`PageMapEntry<L, Present>`] if the [`PageMapEntry`] is present; otherwise, this
     /// function return [`None`].
     pub const fn present(self) -> Option<PageMapEntry<L, Present>> {
@@ -187,7 +250,7 @@ pub struct Pml4e;
 pub struct Pml5e;
 
 /// Marker trait indicating that the implementer is a valid page map level.
-pub trait PageMapLevel: private::PageMapLevelSealed {}
+pub trait PageMapLevel: Copy + private::PageMapLevelSealed {}
 impl PageMapLevel for Pml1e {}
 impl PageMapLevel for Pml2e {}
 impl PageMapLevel for Pml3e {}
@@ -258,7 +321,7 @@ pub struct Leaf;
 pub struct Branch;
 
 /// Marker trait that indicates that the implementer is a valid state of a [`PageMapEntry`].
-pub trait PageMapEntryState: private::PageMapEntryStateSealed {}
+pub trait PageMapEntryState: Copy + private::PageMapEntryStateSealed {}
 impl PageMapEntryState for Unclassified {}
 impl PageMapEntryState for Present {}
 impl PageMapEntryState for Leaf {}
