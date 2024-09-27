@@ -68,6 +68,16 @@ pub struct PageMapEntry<L: PageMapLevel, S: PageMapEntryState> {
     phantom: PhantomData<(L, S)>,
 }
 
+impl<L: PageMapLevel> PageMapEntry<L, Unclassified> {
+    /// Creates a new [`PageMapEntry`] that is unclassified.
+    pub const fn new() -> Self {
+        Self {
+            value: 0,
+            phantom: PhantomData,
+        }
+    }
+}
+
 impl<L: PageMapLevel, S: PageMapEntryState> PageMapEntry<L, S> {
     /// Returns this [`PageMapEntry`] as a [`PageMapEntry<L, Unclassified>`].
     pub const fn unclassified(self) -> PageMapEntry<L, Unclassified> {
@@ -90,6 +100,22 @@ impl<L: PageMapLevel, S: PageMapEntryState> PageMapEntry<L, S> {
             phantom: PhantomData,
         })
     }
+
+    /// Sets the present bit in this [`PageMapEntry`].
+    pub const fn set_present(self) -> PageMapEntry<L, Present> {
+        PageMapEntry {
+            value: self.value | 0b1,
+            phantom: PhantomData,
+        }
+    }
+
+    /// Clears the present bit in this [`PageMapEntry`].
+    pub const fn clear_present(self) -> PageMapEntry<L, Unclassified> {
+        PageMapEntry {
+            value: self.value & !0b1,
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<L: PageMapLevel, S: PageMapEntryPresent> PageMapEntry<L, S> {
@@ -98,10 +124,23 @@ impl<L: PageMapLevel, S: PageMapEntryPresent> PageMapEntry<L, S> {
         self.value & (1 << 1) == (1 << 1)
     }
 
+    /// Sets whether the region of memory controlled by this [`PageMapEntry`] should be writable.
+    pub const fn set_writable(mut self, writable: bool) -> Self {
+        self.value = (self.value & !(1 << 1)) | ((writable as u64) << 1);
+        self
+    }
+
     /// Returns `true` if the region of memory controlled by this [`PageMapEntry`] is not
     /// accessible to userspace.
     pub const fn user(self) -> bool {
         self.value & (1 << 2) == (1 << 2)
+    }
+
+    /// Sets whether the region of memory controlled by this [`PageMapEntry`] should be accessible
+    /// to userspace.
+    pub const fn set_user(mut self, accessible: bool) -> Self {
+        self.value = (self.value & !(1 << 2)) | ((accessible as u64) << 2);
+        self
     }
 
     /// Returns `true` if the bit is set.
@@ -112,6 +151,15 @@ impl<L: PageMapLevel, S: PageMapEntryPresent> PageMapEntry<L, S> {
         self.value & (1 << 3) == (1 << 3)
     }
 
+    /// Sets the write through bit.
+    ///
+    /// This bit helps determine the memory type used to access the item pointed to by this
+    /// [`PageMapEntry`].
+    pub const fn set_write_through(mut self, write_through: bool) -> Self {
+        self.value = (self.value & !(1 << 3)) | ((write_through as u64) << 3);
+        self
+    }
+
     /// Returns `true` if the bit is set.
     ///
     /// This bit helps determine the memory type used to access the item pointed to by this
@@ -120,21 +168,72 @@ impl<L: PageMapLevel, S: PageMapEntryPresent> PageMapEntry<L, S> {
         self.value & (1 << 4) == (1 << 4)
     }
 
+    /// Sets the write through bit.
+    ///
+    /// This bit helps determine the memory type used to access the item pointed to by this
+    /// [`PageMapEntry`].
+    pub const fn set_cache_disable(mut self, cache_disable: bool) -> Self {
+        self.value = (self.value & !(1 << 4)) | ((cache_disable as u64) << 4);
+        self
+    }
+
     /// Returns `true` if the region of memory controlled by this [`PageMapEntry`] has been
     /// accessed.
     pub const fn accessed(self) -> bool {
         self.value & (1 << 5) == (1 << 5)
     }
 
-    /// Returns `true` if HLAT paging should restart with ordinary paging.
+    /// Sets whether the region of memory controlled by this [`PageMapEntry`] should be marked as
+    /// having been accessed.
+    pub const fn set_accessed(mut self, accessed: bool) -> Self {
+        self.value = (self.value & !(1 << 5)) | ((accessed as u64) << 5);
+        self
+    }
+
+    /// Returns `true` if HLAT paging should restart with ordinary paging when translation
+    /// encounters this [`PageMapEntry`].
     pub const fn restart(self) -> bool {
-        self.value & (1 << 5) == (1 << 5)
+        self.value & (1 << 11) == (1 << 11)
+    }
+
+    /// Sets whether HLAT paging should restart with ordinary paging when translation encounters
+    /// this [`PageMapEntry`].
+    pub const fn set_restart(mut self, restart: bool) -> Self {
+        self.value = (self.value & !(1 << 11)) | ((restart as u64) << 11);
+        self
     }
 
     /// Returns `true` if the region of memory controlled by this [`PageMapEntry`] cannot be
     /// executed.
     pub const fn no_execute(self) -> bool {
         self.value & (1 << 63) == (1 << 63)
+    }
+
+    /// Sets whether the region of memory controlled by this [`PageMapEntry`] should be not
+    /// executable.
+    pub const fn set_no_execute(mut self, no_execute: bool) -> Self {
+        self.value = (self.value & !(1 << 63)) | ((no_execute as u64) << 63);
+        self
+    }
+}
+
+impl<L: LeafSupport, S: PageMapEntryPresent> PageMapEntry<L, S> {
+    /// Sets the [`PageMapEntry`] to be a leaf entry.
+    pub const fn set_leaf(self, leaf_address: u64) -> PageMapEntry<L, Leaf> {
+        PageMapEntry {
+            value: (self.value & !L::ADDRESS_MASK) | (leaf_address & L::ADDRESS_MASK),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<L: BranchSupport, S: PageMapEntryPresent> PageMapEntry<L, S> {
+    /// Sets the [`PageMapEntry`] to be a branch entry.
+    pub const fn set_branch(self, branch_address: u64) -> PageMapEntry<L, Branch> {
+        PageMapEntry {
+            value: (self.value & !0x000F_FFFF_FFFF_F000) | (branch_address & 0x000F_FFFF_FFFF_F000),
+            phantom: PhantomData,
+        }
     }
 }
 
@@ -198,10 +297,23 @@ impl<L: LeafSupport> PageMapEntry<L, Leaf> {
         self.value & (1 << 6) == (1 << 6)
     }
 
+    /// Sets whether the region of memory controlled by this [`PageMapEntry`] has been written to.
+    pub const fn set_dirty(mut self, dirty: bool) -> Self {
+        self.value = (self.value & !(1 << 6)) | ((dirty as u64) << 6);
+        self
+    }
+
     /// Returns `true` if the region of memory controlled by this [`PageMapEntry`] should be
     /// translated globally.
     pub const fn global(self) -> bool {
         self.value & (1 << 8) == (1 << 8)
+    }
+
+    /// Sets whether the region of memory controlled by this [`PageMapEntry`] should be translated
+    /// globally.
+    pub const fn set_global(mut self, global: bool) -> Self {
+        self.value = (self.value & !(1 << 8)) | ((global as u64) << 8);
+        self
     }
 
     /// Returns `true` if the bit is set.
@@ -210,6 +322,15 @@ impl<L: LeafSupport> PageMapEntry<L, Leaf> {
     /// [`PageMapEntry`].
     pub const fn pat(self) -> bool {
         self.value & (1 << L::PAT_BIT_POS) == (1 << L::PAT_BIT_POS)
+    }
+
+    /// Sets the pat bit.
+    ///
+    /// This bit helps determine the memory type used to access the item pointed to by this
+    /// [`PageMapEntry`].
+    pub const fn set_pat(mut self, pat: bool) -> Self {
+        self.value = (self.value & !(1 << L::PAT_BIT_POS)) | ((pat as u64) << L::PAT_BIT_POS);
+        self
     }
 
     /// Returns the base address of the region of memory controlled by this [`PageMapEntry`].
@@ -222,6 +343,12 @@ impl<L: BranchSupport> PageMapEntry<L, Branch> {
     /// Returns the base address of the next level of the page table hierarchy.
     pub const fn frame(self) -> u64 {
         self.value & 0x000F_FFFF_FFFF_F000
+    }
+}
+
+impl<L: PageMapLevel> Default for PageMapEntry<L, Unclassified> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -362,7 +489,7 @@ mod private {
 mod tests {
     use core::marker::PhantomData;
 
-    use super::{PageMapEntry, Pml5e, Unclassified};
+    use super::{PageMapEntry, PageTable, Pml5e, Unclassified};
 
     #[test]
     fn pml5e() {
@@ -380,5 +507,24 @@ mod tests {
 
         let entry = entry.branch();
         assert_eq!(entry.frame(), 0)
+    }
+
+    #[test]
+    fn page_table() {
+        let mut table = PageTable::<Pml5e>::new();
+        let entry = table.get(0).unwrap();
+
+        let entry = entry
+            .set_present()
+            .set_user(false)
+            .set_restart(false)
+            .set_writable(false)
+            .set_accessed(false)
+            .set_no_execute(true)
+            .set_write_through(false)
+            .set_cache_disable(false)
+            .set_branch(0xF0_0000);
+
+        table.set(0, entry.unclassified()).unwrap();
     }
 }
