@@ -5,6 +5,8 @@
 
 use core::fmt;
 
+pub mod registers;
+
 // Ensure that at least one of the architecture is enabled.
 #[cfg(not(any(feature = "x86", feature = "x86_64")))]
 compile_error!("At least one of `x86` and `x86_64` must be enabled");
