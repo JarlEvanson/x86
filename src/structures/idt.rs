@@ -2,10 +2,28 @@
 
 use core::fmt;
 
-use crate::registers::{
-    flags::{ArchitectureExt, Flags},
-    segmentation::SegmentSelector,
+use crate::{
+    registers::{
+        flags::{ArchitectureExt, Flags},
+        segmentation::SegmentSelector,
+    },
+    Current,
 };
+
+/// A handler function for an interrupt or exception without an error code.
+#[cfg(feature = "abi-x86-interrupt")]
+pub type HandlerFunc = extern "x86-interrupt" fn(_: InterruptStackFrame<Current>);
+/// A handler function for an interrupt or exception with an error code.
+#[cfg(feature = "abi-x86-interrupt")]
+pub type HandlerFuncErrorCode =
+    extern "x86-interrupt" fn(_: InterruptStackFrame<Current>, code: u64) -> !;
+/// A handler function for an interrupt or exception without an error code that must not return.
+#[cfg(feature = "abi-x86-interrupt")]
+pub type NoReturnHandlerFunc = extern "x86-interrupt" fn(_: InterruptStackFrame<Current>) -> !;
+/// A handler function for an interrupt or exception with an error code that must not return.
+#[cfg(feature = "abi-x86-interrupt")]
+pub type NoReturnHandlerFuncErrorCode =
+    extern "x86-interrupt" fn(_: InterruptStackFrame<Current>, code: u64) -> !;
 
 /// The interrupt stack frame pushed by the CPU whenever an exception or interrupt occurs.
 #[repr(C)]

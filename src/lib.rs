@@ -2,6 +2,7 @@
 //! registers, and structures.
 
 #![cfg_attr(not(test), no_std)]
+#![cfg_attr(feature = "abi-x86-interrupt", feature(abi_x86_interrupt))]
 
 use core::fmt;
 

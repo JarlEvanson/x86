@@ -13,6 +13,10 @@ x86_64 = []
 # Enables `x86` and `x86_64` specific instructions.
 instructions = []
 
+# Enables support for `x86-interrupt` ABI handlers.
+abi-x86-interrupt = []
+
+
 [dependencies]
 
 [lints.rust]
