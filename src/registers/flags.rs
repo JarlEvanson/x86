@@ -5,6 +5,7 @@ use core::fmt;
 use crate::{Architecture, PrivilegeLevel, X86, X86_64};
 
 /// The `x86` and `x86_64` flags register.
+#[repr(transparent)]
 pub struct Flags<A: Architecture>(A::GeneralRegister);
 
 #[allow(clippy::missing_docs_in_private_items)]

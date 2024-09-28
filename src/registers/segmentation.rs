@@ -284,6 +284,7 @@ impl GS {
 }
 
 /// Sepcifies from where to load an element into a segment register.
+#[repr(transparent)]
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SegmentSelector(u16);
 
