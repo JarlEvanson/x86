@@ -76,3 +76,30 @@ impl fmt::Display for PrivilegeLevel {
         fmt::Debug::fmt(self, f)
     }
 }
+
+/// The `x86` architecture.
+///
+/// This is a 32-bit architecture.
+pub struct X86;
+
+/// The `x86_64` architecture.
+///
+/// This is a 64-bit architecture.
+pub struct X86_64;
+
+/// Trait that helps abstract over differences in the `x86` and `x86_64` architectures.
+pub trait Architecture: private::Sealed {}
+impl Architecture for X86 {}
+impl Architecture for X86_64 {}
+
+mod private {
+    //! Module used to seal the [`Architecture`] trait.
+
+    use super::{X86, X86_64};
+
+    /// Trait sealing [`Architecture`].
+    pub trait Sealed {}
+
+    impl Sealed for X86 {}
+    impl Sealed for X86_64 {}
+}
