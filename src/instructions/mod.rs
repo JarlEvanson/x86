@@ -3,3 +3,4 @@
 pub mod cpuid;
 pub mod port;
 pub mod random;
+pub mod tlb;
