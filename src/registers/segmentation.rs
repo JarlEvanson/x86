@@ -333,6 +333,16 @@ impl SegmentSelector {
     pub const fn set_rpl(self, rpl: PrivilegeLevel) -> Self {
         Self((self.0 & !0b11) | (rpl as u16))
     }
+
+    /// Creates a new [`SegmentSelector`] from its raw representation.
+    pub const fn from_raw(raw: u16) -> Self {
+        Self(raw)
+    }
+
+    /// Returns the raw representation of this [`SegmentSelector`].
+    pub const fn to_raw(self) -> u16 {
+        self.0
+    }
 }
 
 impl fmt::Debug for SegmentSelector {
