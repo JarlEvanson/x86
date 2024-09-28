@@ -10,6 +10,15 @@ pub mod instructions;
 pub mod registers;
 pub mod structures;
 
+/// The current architecture between `x86` and `x86_64`, if the target architecture is one of those
+/// two.
+#[cfg(target_arch = "x86_64")]
+pub type Current = X86_64;
+/// The current architecture between `x86` and `x86_64`, if the target architecture is one of those
+/// two.
+#[cfg(target_arch = "x86")]
+pub type Current = X86;
+
 /// A protection ring level.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PrivilegeLevel {
