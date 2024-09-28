@@ -8,6 +8,7 @@ use core::fmt;
 #[cfg(feature = "instructions")]
 pub mod instructions;
 pub mod registers;
+pub mod structures;
 
 // Ensure that at least one of the architecture is enabled.
 #[cfg(not(any(feature = "x86", feature = "x86_64")))]
