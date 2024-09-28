@@ -73,6 +73,7 @@ pub struct X86_64;
 pub trait Architecture: private::Sealed {
     /// The type of a general purpose register.
     type GeneralRegister: Copy
+        + core::fmt::Debug
         + core::ops::BitAnd<Output = Self::GeneralRegister>
         + core::ops::BitOr<Output = Self::GeneralRegister>
         + core::ops::BitXor<Output = Self::GeneralRegister>
