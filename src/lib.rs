@@ -5,6 +5,8 @@
 
 use core::fmt;
 
+#[cfg(feature = "instructions")]
+pub mod instructions;
 pub mod registers;
 
 // Ensure that at least one of the architecture is enabled.
